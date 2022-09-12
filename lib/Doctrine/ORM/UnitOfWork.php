@@ -1307,7 +1307,9 @@ class UnitOfWork implements PropertyChangedListener
 
                 $joinColumns = reset($assoc['joinColumns']);
 
-                $calc->addDependency($targetClass->name, $class->name, (int) empty($joinColumns['nullable']));
+                $nullable = !isset($joinColumns['nullable']) || $joinColumns['nullable'] === true;
+
+                $calc->addDependency($targetClass->name, $class->name, !$nullable);
 
                 // If the target class has mapped subclasses, these share the same dependency.
                 if (! $targetClass->subClasses) {
@@ -1323,7 +1325,10 @@ class UnitOfWork implements PropertyChangedListener
                         $newNodes[] = $targetSubClass;
                     }
 
-                    $calc->addDependency($targetSubClass->name, $class->name, 1);
+                    // Refernces to a child has to be allways nullable, since all but one join collums will be null
+                    $childNullable = is_subclass_of($targetSubClass->name, $class->name) || $nullable;
+
+                    $calc->addDependency($targetSubClass->name, $class->name, !$childNullable);
                 }
             }
         }
