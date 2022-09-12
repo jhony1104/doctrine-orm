@@ -4,9 +4,8 @@ declare(strict_types=1);
 
 namespace Doctrine\ORM\Internal;
 
+use Doctrine\ORM\Exception\CommitOrderLoopException;
 use stdClass;
-
-use function array_reverse;
 
 /**
  * CommitOrderCalculator implements topological sorting, which is an ordering
@@ -17,10 +16,6 @@ use function array_reverse;
  */
 class CommitOrderCalculator
 {
-    public const NOT_VISITED = 0;
-    public const IN_PROGRESS = 1;
-    public const VISITED     = 2;
-
     /**
      * Matrix of nodes (aka. vertex).
      * Keys are provided hashes and values are the node definition objects.
@@ -39,13 +34,6 @@ class CommitOrderCalculator
      * @var array<stdClass>
      */
     private $nodeList = [];
-
-    /**
-     * Volatile variable holding calculated nodes during sorting process.
-     *
-     * @psalm-var list<object>
-     */
-    private $sortedNodeList = [];
 
     /**
      * Checks for node (vertex) existence in graph.
@@ -72,7 +60,6 @@ class CommitOrderCalculator
         $vertex = new stdClass();
 
         $vertex->hash           = $hash;
-        $vertex->state          = self::NOT_VISITED;
         $vertex->value          = $node;
         $vertex->dependencyList = [];
 
@@ -84,18 +71,24 @@ class CommitOrderCalculator
      *
      * @param string $fromHash
      * @param string $toHash
-     * @param int    $weight
+     * @param bool   $required
      *
      * @return void
      */
-    public function addDependency($fromHash, $toHash, $weight)
+    public function addDependency($fromHash, $toHash, $required)
     {
         $vertex = $this->nodeList[$fromHash];
+
+        // don't replace required edge with optional one
+        if (isset($vertex->dependencyList[$toHash]) && $vertex->dependencyList[$toHash]->required) {
+            return;
+        }
+
         $edge   = new stdClass();
 
-        $edge->from   = $fromHash;
-        $edge->to     = $toHash;
-        $edge->weight = $weight;
+        $edge->from     = $fromHash;
+        $edge->to       = $toHash;
+        $edge->required = $required;
 
         $vertex->dependencyList[$toHash] = $edge;
     }
@@ -110,18 +103,15 @@ class CommitOrderCalculator
      */
     public function sort()
     {
-        foreach ($this->nodeList as $vertex) {
-            if ($vertex->state !== self::NOT_VISITED) {
-                continue;
-            }
+        $visited = [];
 
-            $this->visit($vertex);
+        foreach ($this->nodeList as $vertex) {
+            $visited = $this->visit($vertex, $visited, []);
         }
 
-        $sortedList = $this->sortedNodeList;
+        $sortedList = array_map(fn ($hash) => $this->nodeList[$hash]->value, $visited);
 
-        $this->nodeList       = [];
-        $this->sortedNodeList = [];
+        $this->nodeList = [];
 
         return array_reverse($sortedList);
     }
@@ -131,49 +121,28 @@ class CommitOrderCalculator
      *
      * {@internal Highly performance-sensitive method.}
      */
-    private function visit(stdClass $vertex): void
+    private function visit(stdClass $vertex, $visited, $parents): array
     {
-        $vertex->state = self::IN_PROGRESS;
+        // if loop is encountered abandon path by thowning exception
+        if (in_array($vertex->hash, $parents)) throw new CommitOrderLoopException($parents, $vertex->hash);
+        // if already visited nothing needs to be done
+        if (in_array($vertex->hash, $visited)) return $visited;
 
-        foreach ($vertex->dependencyList as $edge) {
-            $adjacentVertex = $this->nodeList[$edge->to];
+        foreach ($vertex->dependencyList as $toHash => $edge) {
+            // skip self references (node is currently visited)
+            if ($vertex->hash == $toHash) continue;
 
-            switch ($adjacentVertex->state) {
-                case self::VISITED:
-                    // Do nothing, since node was already visited
-                    break;
-
-                case self::IN_PROGRESS:
-                    if (
-                        isset($adjacentVertex->dependencyList[$vertex->hash]) &&
-                        $adjacentVertex->dependencyList[$vertex->hash]->weight < $edge->weight
-                    ) {
-                        // If we have some non-visited dependencies in the in-progress dependency, we
-                        // need to visit them before adding the node.
-                        foreach ($adjacentVertex->dependencyList as $adjacentEdge) {
-                            $adjacentEdgeVertex = $this->nodeList[$adjacentEdge->to];
-
-                            if ($adjacentEdgeVertex->state === self::NOT_VISITED) {
-                                $this->visit($adjacentEdgeVertex);
-                            }
-                        }
-
-                        $adjacentVertex->state = self::VISITED;
-
-                        $this->sortedNodeList[] = $adjacentVertex->value;
-                    }
-
-                    break;
-
-                case self::NOT_VISITED:
-                    $this->visit($adjacentVertex);
+            // if edge is required don't catch loops
+            if ($edge->required) {
+                $visited = $this->visit($this->nodeList[$toHash], $visited, [...$parents, $vertex->hash]);
+            } else {
+                try {
+                    $visited = $this->visit($this->nodeList[$toHash], $visited, [...$parents, $vertex->hash]);
+                } catch (CommitOrderLoopException $ex) {
+                }
             }
         }
 
-        if ($vertex->state !== self::VISITED) {
-            $vertex->state = self::VISITED;
-
-            $this->sortedNodeList[] = $vertex->value;
-        }
+        return [...$visited, $vertex->hash];
     }
 }
