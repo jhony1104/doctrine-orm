@@ -14,7 +14,7 @@ class GHI7866Test extends OrmFunctionalTestCase
     {
         parent::setUp();
 
-        $this->createSchemaForModels(GHI7866_User::class, GHI7866_UploadedFile::class, GHI7866_Template::class, GHI7866_Section::class, GHI7866_Slot::class);
+        $this->createSchemaForModels(GHI7866_User::class, GHI7866_UploadedFile::class);
     }
 
     public function testExtraUpdateInsert(): void

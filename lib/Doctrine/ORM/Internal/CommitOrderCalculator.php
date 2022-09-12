@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Doctrine\ORM\Internal;
 
-use Exception;
+use Doctrine\ORM\Exception\CommitOrderLoopException;
 use stdClass;
 
 /**
@@ -80,7 +80,7 @@ class CommitOrderCalculator
         $vertex = $this->nodeList[$fromHash];
 
         // don't replace required edge with optional one
-        if (isset($vertex->dependencyList[$toHash]) && $vertex->dependencyList[$toHash]->nullable) {
+        if (isset($vertex->dependencyList[$toHash]) && $vertex->dependencyList[$toHash]->required) {
             return;
         }
 
@@ -144,15 +144,5 @@ class CommitOrderCalculator
         }
 
         return [...$visited, $vertex->hash];
-    }
-}
-
-class CommitOrderLoopException extends Exception
-{
-    public function __construct($vertexHashStack, $vertexHash)
-    {
-        $loop = implode(", ", $vertexHashStack) . ", " . $vertexHash;
-
-        parent::__construct("The CommitOrderCalculator found a loop: '{$loop}'");
     }
 }
