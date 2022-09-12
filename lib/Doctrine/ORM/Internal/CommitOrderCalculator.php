@@ -109,7 +109,7 @@ class CommitOrderCalculator
             $visited = $this->visit($vertex, $visited, []);
         }
 
-        $sortedList = array_map(fn ($hash) => $this->nodeList[$hash]->value, $visited);
+        $sortedList = array_map(function($hash) { return $this->nodeList[$hash]->value; }, $visited);
 
         $this->nodeList = [];
 
@@ -134,15 +134,15 @@ class CommitOrderCalculator
 
             // if edge is required don't catch loops
             if ($edge->required) {
-                $visited = $this->visit($this->nodeList[$toHash], $visited, [...$parents, $vertex->hash]);
+                $visited = $this->visit($this->nodeList[$toHash], $visited, array_merge($parents, [$vertex->hash]));
             } else {
                 try {
-                    $visited = $this->visit($this->nodeList[$toHash], $visited, [...$parents, $vertex->hash]);
+                    $visited = $this->visit($this->nodeList[$toHash], $visited, array_merge($parents, [$vertex->hash]));
                 } catch (CommitOrderLoopException $ex) {
                 }
             }
         }
 
-        return [...$visited, $vertex->hash];
+        return array_merge($visited, [$vertex->hash]);
     }
 }
