@@ -21,11 +21,11 @@ class GHI7866Test extends OrmFunctionalTestCase
     {
         // Create and populate entities
         $uploadedFile = new GHI7866_UploadedFile();
-        $user = new GHI7866_User();
+        $user         = new GHI7866_User();
 
-        $uploadedFile->owner = $user;
+        $uploadedFile->owner        = $user;
         $uploadedFile->lastViewedBy = $user;
-        $user->setLastUploadedFile = $uploadedFile;
+        $user->setLastUploadedFile  = $uploadedFile;
 
         try {
             $this->_em->persist($uploadedFile);
@@ -35,7 +35,7 @@ class GHI7866Test extends OrmFunctionalTestCase
 
             self::assertTrue(true);
         } catch (NotNullConstraintViolationException $e) {
-            self::fail("Insert was not possible");
+            self::fail('Insert was not possible');
         }
     }
 }
@@ -55,6 +55,7 @@ class GHI7866_User
     /**
      * @ORM\OneToOne(targetEntity="GHI7866_UploadedFile")
      * @ORM\JoinColumn(nullable=true)
+     *
      * @var ?GHI7866_UploadedFile
      */
     public $lastUploadedFile;
@@ -75,6 +76,7 @@ class GHI7866_UploadedFile
     /**
      * @ORM\OneToOne(targetEntity="GHI7866_User")
      * @ORM\JoinColumn(nullable=false)
+     *
      * @var GHI7866_User
      */
     public $owner;
@@ -82,6 +84,7 @@ class GHI7866_UploadedFile
     /**
      * @ORM\OneToOne(targetEntity="GHI7866_User")
      * @ORM\JoinColumn(nullable=true)
+     *
      * @var ?GHI7866_User
      */
     public $lastViewedBy;

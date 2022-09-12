@@ -6,6 +6,8 @@ namespace Doctrine\ORM\Exception;
 
 use Exception;
 
+use function implode;
+
 /**
  * This ecxeption gets thrown by the CommitOrderCalculator if a loop was detedted.
  * Usually the CommitOrderCalculator catches this exception and skips an unrequired
@@ -16,7 +18,7 @@ class CommitOrderLoopException extends Exception
 {
     public function __construct($vertexHashStack, $vertexHash)
     {
-        $loop = implode(", ", $vertexHashStack) . ", " . $vertexHash;
+        $loop = implode(', ', $vertexHashStack) . ', ' . $vertexHash;
 
         parent::__construct("The CommitOrderCalculator found a loop: '{$loop}'");
     }

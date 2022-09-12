@@ -7,6 +7,11 @@ namespace Doctrine\ORM\Internal;
 use Doctrine\ORM\Exception\CommitOrderLoopException;
 use stdClass;
 
+use function array_map;
+use function array_merge;
+use function array_reverse;
+use function in_array;
+
 /**
  * CommitOrderCalculator implements topological sorting, which is an ordering
  * algorithm for directed graphs (DG) and/or directed acyclic graphs (DAG) by
@@ -84,7 +89,7 @@ class CommitOrderCalculator
             return;
         }
 
-        $edge   = new stdClass();
+        $edge = new stdClass();
 
         $edge->from     = $fromHash;
         $edge->to       = $toHash;
@@ -109,7 +114,9 @@ class CommitOrderCalculator
             $visited = $this->visit($vertex, $visited, []);
         }
 
-        $sortedList = array_map(function($hash) { return $this->nodeList[$hash]->value; }, $visited);
+        $sortedList = array_map(function ($hash) {
+            return $this->nodeList[$hash]->value;
+        }, $visited);
 
         $this->nodeList = [];
 
@@ -124,13 +131,20 @@ class CommitOrderCalculator
     private function visit(stdClass $vertex, $visited, $parents): array
     {
         // if loop is encountered abandon path by thowning exception
-        if (in_array($vertex->hash, $parents)) throw new CommitOrderLoopException($parents, $vertex->hash);
+        if (in_array($vertex->hash, $parents)) {
+            throw new CommitOrderLoopException($parents, $vertex->hash);
+        }
+
         // if already visited nothing needs to be done
-        if (in_array($vertex->hash, $visited)) return $visited;
+        if (in_array($vertex->hash, $visited)) {
+            return $visited;
+        }
 
         foreach ($vertex->dependencyList as $toHash => $edge) {
             // skip self references (node is currently visited)
-            if ($vertex->hash == $toHash) continue;
+            if ($vertex->hash === $toHash) {
+                continue;
+            }
 
             // if edge is required don't catch loops
             if ($edge->required) {

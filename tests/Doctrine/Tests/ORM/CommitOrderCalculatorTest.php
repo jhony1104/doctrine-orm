@@ -7,6 +7,7 @@ namespace Doctrine\Tests\ORM;
 use Doctrine\ORM\Internal\CommitOrderCalculator;
 use Doctrine\ORM\Mapping\ClassMetadata;
 use Doctrine\Tests\OrmTestCase;
+
 use function array_search;
 
 /**

@@ -64,6 +64,7 @@ use function implode;
 use function in_array;
 use function is_array;
 use function is_object;
+use function is_subclass_of;
 use function method_exists;
 use function reset;
 use function spl_object_id;
@@ -1307,8 +1308,8 @@ class UnitOfWork implements PropertyChangedListener
 
                 $joinColumns = reset($assoc['joinColumns']);
 
-                $nullable = !isset($joinColumns['nullable']) || $joinColumns['nullable'] === true;
-                $calc->addDependency($targetClass->name, $class->name, !$nullable);
+                $nullable = ! isset($joinColumns['nullable']) || $joinColumns['nullable'] === true;
+                $calc->addDependency($targetClass->name, $class->name, ! $nullable);
 
                 // If the target class has mapped subclasses, these share the same dependency.
                 if (! $targetClass->subClasses) {
@@ -1326,7 +1327,7 @@ class UnitOfWork implements PropertyChangedListener
 
                     // Refernces to a child has to be allways nullable, since all but one join collums will be null
                     $childNullable = is_subclass_of($targetSubClass->name, $class->name) || $nullable;
-                    $calc->addDependency($targetSubClass->name, $class->name, !$childNullable);
+                    $calc->addDependency($targetSubClass->name, $class->name, ! $childNullable);
                 }
             }
         }
