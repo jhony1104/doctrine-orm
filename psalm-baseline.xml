@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<files psalm-version="4.27.0@faf106e717c37b8c81721845dba9de3d8deed8ff">
+<files psalm-version="4.28.0@52e96bea381e6cb07a672aefec791a5817694a26">
   <file src="lib/Doctrine/ORM/AbstractQuery.php">
     <DeprecatedClass occurrences="1">
       <code>IterableResult</code>
@@ -500,7 +500,7 @@
     </RedundantCastGivenDocblockType>
   </file>
   <file src="lib/Doctrine/ORM/Mapping/ClassMetadata.php">
-    <PropertyNotSetInConstructor occurrences="5">
+    <PropertyNotSetInConstructor occurrences="4">
       <code>ClassMetadata</code>
       <code>ClassMetadata</code>
       <code>ClassMetadata</code>
@@ -525,10 +525,6 @@
       <code>addNamedNativeQuery</code>
       <code>addNamedQuery</code>
     </DeprecatedMethod>
-    <DocblockTypeContradiction occurrences="2">
-      <code>! $definition</code>
-      <code>$definition</code>
-    </DocblockTypeContradiction>
     <InvalidArrayOffset occurrences="1">
       <code>$subClass-&gt;table[$indexType][$indexName]</code>
     </InvalidArrayOffset>
@@ -661,10 +657,9 @@
       <code>$this-&gt;associationMappings[$idProperty]['joinColumns']</code>
       <code>$this-&gt;associationMappings[$idProperty]['joinColumns']</code>
     </PossiblyUndefinedArrayOffset>
-    <PropertyNotSetInConstructor occurrences="5">
+    <PropertyNotSetInConstructor occurrences="4">
       <code>$idGenerator</code>
       <code>$namespace</code>
-      <code>$sequenceGeneratorDefinition</code>
       <code>$table</code>
       <code>$tableGeneratorDefinition</code>
     </PropertyNotSetInConstructor>
@@ -1427,9 +1422,6 @@
       <code>parent::setHint($name, $value)</code>
       <code>parent::setHydrationMode($hydrationMode)</code>
     </LessSpecificReturnStatement>
-    <MoreSpecificImplementedParamType occurrences="1">
-      <code>$parameters</code>
-    </MoreSpecificImplementedParamType>
     <MoreSpecificReturnType occurrences="2">
       <code>self</code>
       <code>self</code>
@@ -2718,9 +2710,6 @@
     <DocblockTypeContradiction occurrences="1">
       <code>class_exists($metadata-&gt;name)</code>
     </DocblockTypeContradiction>
-    <InvalidDocblock occurrences="1">
-      <code>public function setFieldVisibility($visibility)</code>
-    </InvalidDocblock>
     <PossiblyFalseArgument occurrences="2">
       <code>$last</code>
       <code>strrpos($metadata-&gt;name, '\\')</code>
@@ -2735,9 +2724,7 @@
       <code>(array) $metadata-&gt;table['options']</code>
       <code>(bool) $embeddablesImmutable</code>
     </RedundantCastGivenDocblockType>
-    <RedundantConditionGivenDocblockType occurrences="3">
-      <code>$metadata-&gt;sequenceGeneratorDefinition</code>
-      <code>$metadata-&gt;sequenceGeneratorDefinition</code>
+    <RedundantConditionGivenDocblockType occurrences="1">
       <code>isset($metadata-&gt;lifecycleCallbacks)</code>
     </RedundantConditionGivenDocblockType>
   </file>
@@ -2840,10 +2827,9 @@
       <code>$field['associationKey']</code>
       <code>isset($field['associationKey']) &amp;&amp; $field['associationKey']</code>
     </RedundantCondition>
-    <RedundantConditionGivenDocblockType occurrences="4">
+    <RedundantConditionGivenDocblockType occurrences="3">
       <code>$metadata-&gt;inheritanceType</code>
       <code>$metadata-&gt;inheritanceType</code>
-      <code>$sequenceDefinition</code>
       <code>isset($metadata-&gt;lifecycleCallbacks)</code>
     </RedundantConditionGivenDocblockType>
   </file>

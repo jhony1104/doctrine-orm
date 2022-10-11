@@ -1,5 +1,5 @@
 Separating Concerns using Embeddables
--------------------------------------
+=====================================
 
 Embeddables are classes which are not entities themselves, but are embedded
 in entities and can also be queried in DQL. You'll mostly want to use them
@@ -151,6 +151,12 @@ directly, set ``columnPrefix=false`` (``use-column-prefix="false"`` for XML):
             private $address;
         }
 
+    .. code-block:: xml
+
+        <entity name="User">
+            <embedded name="address" class="Address" use-column-prefix="false" />
+        </entity>
+
     .. code-block:: yaml
 
         User:
@@ -159,12 +165,6 @@ directly, set ``columnPrefix=false`` (``use-column-prefix="false"`` for XML):
             address:
               class: Address
               columnPrefix: false
-
-    .. code-block:: xml
-
-        <entity name="User">
-            <embedded name="address" class="Address" use-column-prefix="false" />
-        </entity>
 
 
 DQL
