@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace Doctrine\Tests\ORM;
 
+use Doctrine\ORM\Internal\CommitOrder\CycleDetectedException;
 use Doctrine\ORM\Internal\CommitOrderCalculator;
 use Doctrine\Tests\OrmTestCase;
-use stdClass;
 
+use function array_map;
 use function array_values;
 use function spl_object_id;
 
@@ -20,6 +21,9 @@ use function spl_object_id;
  */
 class CommitOrderCalculatorTest extends OrmTestCase
 {
+    /** @var array<string, Node> */
+    private $nodes = [];
+
     /** @var CommitOrderCalculator */
     private $_calc;
 
@@ -28,118 +32,150 @@ class CommitOrderCalculatorTest extends OrmTestCase
         $this->_calc = new CommitOrderCalculator();
     }
 
-    public function testCommitOrdering1(): void
+    public function testSimpleOrdering(): void
     {
-        $class1 = new stdClass();
-        $class2 = new stdClass();
-        $class3 = new stdClass();
-        $class4 = new stdClass();
-        $class5 = new stdClass();
+        $this->addNodes('C', 'B', 'A', 'E');
 
-        $this->_calc->addNode(spl_object_id($class1), $class1);
-        $this->_calc->addNode(spl_object_id($class2), $class2);
-        $this->_calc->addNode(spl_object_id($class3), $class3);
-        $this->_calc->addNode(spl_object_id($class4), $class4);
-        $this->_calc->addNode(spl_object_id($class5), $class5);
-
-        $this->_calc->addDependency(spl_object_id($class1), spl_object_id($class2), true);
-        $this->_calc->addDependency(spl_object_id($class2), spl_object_id($class3), true);
-        $this->_calc->addDependency(spl_object_id($class3), spl_object_id($class4), true);
-        $this->_calc->addDependency(spl_object_id($class5), spl_object_id($class1), true);
-
-        $sorted = $this->_calc->sort();
+        $this->addDependency('A', 'B');
+        $this->addDependency('B', 'C');
+        $this->addDependency('E', 'A');
 
         // There is only 1 valid ordering for this constellation
-        $correctOrder = [$class5, $class1, $class2, $class3, $class4];
-
-        self::assertSame($correctOrder, array_values($sorted));
+        self::assertSame(['E', 'A', 'B', 'C'], $this->computeResult());
     }
 
-    public function testCommitOrdering2(): void
+    public function testSkipOptionalEdgeToBreakCycle(): void
     {
-        $class1 = new stdCLass();
-        $class2 = new stdCLass();
+        $this->addNodes('A', 'B');
 
-        $this->_calc->addNode(spl_object_id($class1), $class1);
-        $this->_calc->addNode(spl_object_id($class2), $class2);
+        $this->addDependency('A', 'B', true);
+        $this->addDependency('B', 'A', false);
 
-        $this->_calc->addDependency(spl_object_id($class1), spl_object_id($class2), false);
-        $this->_calc->addDependency(spl_object_id($class2), spl_object_id($class1), true);
-
-        $sorted = $this->_calc->sort();
-
-        // There is only 1 valid ordering for this constellation
-        $correctOrder = [$class2, $class1];
-
-        self::assertSame($correctOrder, array_values($sorted));
+        self::assertSame(['B', 'A'], $this->computeResult());
     }
 
-    public function testCommitOrdering3(): void
+    public function testBreakCycleByBacktracking(): void
+    {
+        $this->addNodes('A', 'B', 'C', 'D');
+
+        $this->addDependency('A', 'B');
+        $this->addDependency('B', 'C', true);
+        $this->addDependency('C', 'D');
+        $this->addDependency('D', 'A'); // closes the cycle
+
+        // We can only break B -> C, so the result must be C -> D -> A -> B
+        self::assertSame(['C', 'D', 'A', 'B'], $this->computeResult());
+    }
+
+    public function testCycleRemovedByEliminatingLastOptionalEdge(): void
+    {
+        // The cycle-breaking algorithm is currently very naive. It breaks the cycle
+        // at the last optional edge while it backtracks. In this example, we might
+        // get away with one extra update if we'd break A->B; instead, we break up
+        // B->C and B->D.
+
+        $this->addNodes('A', 'B', 'C', 'D');
+
+        $this->addDependency('A', 'B', true);
+        $this->addDependency('B', 'C', true);
+        $this->addDependency('C', 'A');
+        $this->addDependency('B', 'D', true);
+        $this->addDependency('D', 'A');
+
+        self::assertSame(['C', 'D', 'A', 'B'], $this->computeResult());
+    }
+
+    public function testCommitOrderingFromGH7259Test(): void
     {
         // this test corresponds to the GH7259Test::testPersistFileBeforeVersion functional test
-        $class1 = new stdClass();
-        $class2 = new stdClass();
-        $class3 = new stdClass();
-        $class4 = new stdClass();
+        $this->addNodes('A', 'B', 'C', 'D');
 
-        $this->_calc->addNode(spl_object_id($class1), $class1);
-        $this->_calc->addNode(spl_object_id($class2), $class2);
-        $this->_calc->addNode(spl_object_id($class3), $class3);
-        $this->_calc->addNode(spl_object_id($class4), $class4);
-
-        $this->_calc->addDependency(spl_object_id($class4), spl_object_id($class1), true);
-        $this->_calc->addDependency(spl_object_id($class1), spl_object_id($class2), true);
-        $this->_calc->addDependency(spl_object_id($class4), spl_object_id($class3), true);
-        $this->_calc->addDependency(spl_object_id($class1), spl_object_id($class4), false);
-
-        $sorted = $this->_calc->sort();
+        $this->addDependency('D', 'A');
+        $this->addDependency('A', 'B');
+        $this->addDependency('D', 'C');
+        $this->addDependency('A', 'D', true);
 
         // There is only multiple valid ordering for this constellation, but
-        // the class4, class1, class2 ordering is important to break the cycle
+        // the D -> A -> B ordering is important to break the cycle
         // on the nullable link.
         $correctOrders = [
-            [$class4, $class1, $class2, $class3],
-            [$class4, $class1, $class3, $class2],
-            [$class4, $class3, $class1, $class2],
+            ['D', 'A', 'B', 'C'],
+            ['D', 'A', 'C', 'B'],
+            ['D', 'C', 'A', 'B'],
         ];
 
-        // We want to perform a strict comparison of the array
-        self::assertContains(array_values($sorted), $correctOrders, '', false, true);
+        self::assertContains($this->computeResult(), $correctOrders);
     }
 
     public function testNodesMaintainOrderWhenNoDepencency(): void
     {
-        $class1 = new stdCLass();
-        $class2 = new stdCLass();
-
-        $this->_calc->addNode(spl_object_id($class1), $class1);
-        $this->_calc->addNode(spl_object_id($class2), $class2);
-
-        $sorted = $this->_calc->sort();
+        $this->addNodes('A', 'B', 'C');
 
         // Nodes that are not constrained by dependencies shall maintain the order
         // in which they were added
-        $correctOrder = [$class1, $class2];
-
-        self::assertSame($correctOrder, array_values($sorted));
+        self::assertSame(['A', 'B', 'C'], $this->computeResult());
     }
 
-    public function testBreakCycleAtOptionalEdge(): void
+    public function testDetectSmallCycle(): void
     {
-        $a = new stdCLass();
-        $b = new stdCLass();
-        $c = new stdCLass();
+        $this->addNodes('A', 'B');
 
-        $this->_calc->addNode(spl_object_id($a), $a);
-        $this->_calc->addNode(spl_object_id($b), $b);
-        $this->_calc->addNode(spl_object_id($c), $c);
+        $this->addDependency('A', 'B');
+        $this->addDependency('B', 'A');
 
-        $this->_calc->addDependency(spl_object_id($a), spl_object_id($b), false);
-        $this->_calc->addDependency(spl_object_id($c), spl_object_id($b), false);
-        $this->_calc->addDependency(spl_object_id($b), spl_object_id($c), true);
+        $this->expectException(CycleDetectedException::class);
+        $this->computeResult();
+    }
 
-        $sorted = $this->_calc->sort();
+    public function testDetectLargerCycleNotIncludingStartNode(): void
+    {
+        $this->addNodes('A', 'B', 'C', 'D');
 
-        self::assertSame([$a, $c, $b], array_values($sorted));
+        $this->addDependency('A', 'B');
+        $this->addDependency('B', 'C');
+        $this->addDependency('C', 'D');
+        $this->addDependency('D', 'B'); // closes the cycle B -> C -> D -> B
+
+        $this->expectException(CycleDetectedException::class);
+        $this->computeResult();
+    }
+
+    private function addNodes(string ...$names): void
+    {
+        foreach ($names as $name) {
+            $node               = new Node($name);
+            $this->nodes[$name] = $node;
+            $this->_calc->addNode($node->id, $node);
+        }
+    }
+
+    private function addDependency(string $from, string $to, bool $optional = false): void
+    {
+        $this->_calc->addDependency($this->nodes[$from]->id, $this->nodes[$to]->id, $optional);
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function computeResult(): array
+    {
+        return array_map(static function (Node $n): string {
+                return $n->name;
+        }, array_values($this->_calc->sort()));
+    }
+}
+
+class Node
+{
+    /** @var string */
+    public $name;
+
+    /** @var int */
+    public $id;
+
+    public function __construct(string $name)
+    {
+        $this->name = $name;
+        $this->id   = spl_object_id($this);
     }
 }

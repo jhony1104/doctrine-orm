@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Doctrine\ORM\Internal;
 
+use Doctrine\ORM\Internal\CommitOrder\CycleDetectedException;
 use Doctrine\ORM\Internal\CommitOrder\Edge;
 use Doctrine\ORM\Internal\CommitOrder\Vertex;
 use Doctrine\ORM\Internal\CommitOrder\VertexState;
@@ -72,8 +73,8 @@ class CommitOrderCalculator
     }
 
     /**
-     * Return a valid order list of all current nodes.
-     * The desired topological sorting is the reverse post order of these searches.
+     * Returns a topological sort of all nodes. When we have a dependency A->B between two nodes
+     * A and B, then A will be listed before B in the result.
      *
      * {@internal Highly performance-sensitive method.}
      *
@@ -82,19 +83,12 @@ class CommitOrderCalculator
     public function sort()
     {
         foreach (array_reverse($this->nodeList) as $vertex) {
-            if ($vertex->state !== VertexState::NOT_VISITED) {
-                continue;
+            if ($vertex->state === VertexState::NOT_VISITED) {
+                $this->visit($vertex);
             }
-
-            $this->visit($vertex);
         }
 
-        $sortedList = $this->sortedNodeList;
-
-        $this->nodeList       = [];
-        $this->sortedNodeList = [];
-
-        return array_reverse($sortedList, true);
+        return array_reverse($this->sortedNodeList, true);
     }
 
     /**
@@ -104,47 +98,45 @@ class CommitOrderCalculator
      */
     private function visit(Vertex $vertex): void
     {
+        if ($vertex->state === VertexState::IN_PROGRESS) {
+            // This node is already on the current DFS stack. We've found a cycle!
+            throw new CycleDetectedException();
+        }
+
+        if ($vertex->state === VertexState::VISITED) {
+            // We've reached a node that we've already seen, including all
+            // other nodes that are reachable from here. We're done here, return.
+            return;
+        }
+
         $vertex->state = VertexState::IN_PROGRESS;
 
+        // Continue the DFS downwards the edge list
         foreach ($vertex->dependencyList as $edge) {
             $adjacentVertex = $this->nodeList[$edge->to];
 
-            switch ($adjacentVertex->state) {
-                case VertexState::VISITED:
-                    // Do nothing, since node was already visited
-                    break;
+            try {
+                $this->visit($adjacentVertex);
+            } catch (CycleDetectedException $exception) {
+                if ($edge->optional) {
+                    // A cycle was found, and $edge is the closest edge while backtracking.
+                    // Skip this edge, continue with the next one.
+                    continue;
+                }
 
-                case VertexState::IN_PROGRESS:
-                    if (
-                        isset($adjacentVertex->dependencyList[$vertex->hash]) &&
-                        $adjacentVertex->dependencyList[$vertex->hash]->optional < $edge->optional
-                    ) {
-                        // If we have some non-visited dependencies in the in-progress dependency, we
-                        // need to visit them before adding the node.
-                        foreach ($adjacentVertex->dependencyList as $adjacentEdge) {
-                            $adjacentEdgeVertex = $this->nodeList[$adjacentEdge->to];
+                // We have found a cycle and cannot break it at $edge. Best we can do
+                // is to retreat from the current vertex, hoping that somewhere up the
+                // stack this can be salvaged.
+                $vertex->state = VertexState::NOT_VISITED;
 
-                            if ($adjacentEdgeVertex->state === VertexState::NOT_VISITED) {
-                                $this->visit($adjacentEdgeVertex);
-                            }
-                        }
-
-                        $adjacentVertex->state = VertexState::VISITED;
-
-                        $this->sortedNodeList[$adjacentVertex->hash] = $adjacentVertex->value;
-                    }
-
-                    break;
-
-                case VertexState::NOT_VISITED:
-                    $this->visit($adjacentVertex);
+                throw $exception;
             }
         }
 
-        if ($vertex->state !== VertexState::VISITED) {
-            $vertex->state = VertexState::VISITED;
+        // We have traversed all edges and visited all other nodes reachable from here.
+        // So we're done with this vertex as well.
 
-            $this->sortedNodeList[$vertex->hash] = $vertex->value;
-        }
+        $vertex->state                       = VertexState::VISITED;
+        $this->sortedNodeList[$vertex->hash] = $vertex->value;
     }
 }

@@ -1260,20 +1260,15 @@ class UnitOfWork implements PropertyChangedListener
         }
     }
 
-    /**
-     * @return array<int, object>
-     */
+    /** @return array<int, object> */
     private function computeInsertExecutionOrder(): array
     {
         return $this->computeAssociationTopoSort($this->entityInsertions);
     }
 
-    /**
-     * @return array<int, object>
-     */
+    /** @return array<int, object> */
     private function computeDeleteExecutionOrder(): array
     {
-        // TODO: Avoid double array_reverse
         return array_reverse($this->computeAssociationTopoSort($this->entityDeletions), true);
     }
 
