@@ -78,7 +78,7 @@ class OneToOneSelfReferentialAssociationTest extends OrmFunctionalTestCase
 
         $query    = $this->_em->createQuery('select c, m from Doctrine\Tests\Models\ECommerce\ECommerceCustomer c left join c.mentor m order by c.id asc');
         $result   = $query->getResult();
-        $customer = $result[0];
+        $customer = $result[1];
         $this->assertLoadingOfAssociation($customer);
     }
 
