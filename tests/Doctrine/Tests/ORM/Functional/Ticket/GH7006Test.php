@@ -4,26 +4,20 @@ declare(strict_types=1);
 
 namespace Doctrine\Tests\ORM\Functional\Ticket;
 
-use Doctrine\DBAL\Platforms\SqlitePlatform;
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Tests\OrmFunctionalTestCase;
 
-/**
- * @group GH6499
- *
- * Specifically, GH6499B has a dependency on GH6499A, and GH6499A
- * has a dependency on GH6499B. Since GH6499A#b is not nullable,
- * the GH6499B should be inserted first.
- */
-class GH6499Test extends OrmFunctionalTestCase
+class GH7006Test extends OrmFunctionalTestCase
 {
     protected function setUp(): void
     {
         parent::setUp();
 
         $this->_schemaTool->createSchema([
-            $this->_em->getClassMetadata(GH6499A::class),
-            $this->_em->getClassMetadata(GH6499B::class),
+            $this->_em->getClassMetadata(GH7006Book::class),
+            $this->_em->getClassMetadata(GH7006PCT::class),
+            $this->_em->getClassMetadata(GH7006PCTFee::class),
         ]);
     }
 
@@ -32,41 +26,125 @@ class GH6499Test extends OrmFunctionalTestCase
         parent::tearDown();
 
         $this->_schemaTool->dropSchema([
-            $this->_em->getClassMetadata(GH6499A::class),
-            $this->_em->getClassMetadata(GH6499B::class),
+            $this->_em->getClassMetadata(GH7006Book::class),
+            $this->_em->getClassMetadata(GH7006PCT::class),
+            $this->_em->getClassMetadata(GH7006PCTFee::class),
         ]);
     }
 
     public function testIssue(): void
     {
-        $b = new GH6499B();
-        $a = new GH6499A();
+        $book               = new GH7006Book();
+        $book->exchangeCode = 'first';
+        $this->_em->persist($book);
 
-        $this->_em->persist($a);
+        $book->exchangeCode = 'second'; // change sth.
 
-        $a->b = $b;
+        $paymentCardTransaction       = new GH7006PCT();
+        $paymentCardTransaction->book = $book;
+        $paymentCardTransactionFee    = new GH7006PCTFee($paymentCardTransaction);
 
-        $this->_em->persist($b);
+        $this->_em->persist($paymentCardTransaction);
 
         $this->_em->flush();
 
-        self::assertIsInt($a->id);
-        self::assertIsInt($b->id);
+        self::assertIsInt($book->id);
+        self::assertIsInt($paymentCardTransaction->id);
+        self::assertIsInt($paymentCardTransactionFee->id);
     }
+}
 
-    public function testIssueReversed(): void
+/**
+ * @ORM\Entity
+ */
+class GH7006Book
+{
+    /**
+     * @ORM\Id
+     * @ORM\Column(type="integer")
+     * @ORM\GeneratedValue(strategy="AUTO")
+     *
+     * @var int
+     */
+    public $id;
+
+    /**
+     * @ORM\Column(type="string", length=255, nullable=true)
+     *
+     * @var string
+     */
+    public $exchangeCode;
+
+    /**
+     * @ORM\OneToOne(targetEntity="GH7006PCT", cascade={"persist", "remove"})
+     * @ORM\JoinColumn(name="paymentCardTransactionId", referencedColumnName="id")
+     *
+     * @var GH7006PCT
+     */
+    public $paymentCardTransaction;
+}
+
+/**
+ * @ORM\Entity
+ */
+class GH7006PCT
+{
+    /**
+     * @ORM\Id
+     * @ORM\Column(type="integer")
+     * @ORM\GeneratedValue(strategy="AUTO")
+     *
+     * @var int
+     */
+    public $id;
+
+    /**
+     * @ORM\ManyToOne(targetEntity="GH7006Book")
+     * @ORM\JoinColumn(name="bookingId", referencedColumnName="id", nullable=false)
+     *
+     * @var GH7006Book
+     */
+    public $book;
+
+    /**
+     * @ORM\OneToMany(targetEntity="GH7006PCTFee", mappedBy="pct", cascade={"persist", "remove"})
+     * @ORM\OrderBy({"id" = "ASC"})
+     *
+     * @var GH7006PCTFee[]
+     */
+    public $fees;
+
+    public function __construct()
     {
-        $b = new GH6499B();
-        $a = new GH6499A();
+        $this->fees = new ArrayCollection();
+    }
+}
 
-        $a->b = $b;
+/**
+ * @ORM\Entity
+ */
+class GH7006PCTFee
+{
+    /**
+     * @ORM\Id
+     * @ORM\Column(type="integer")
+     * @ORM\GeneratedValue(strategy="AUTO")
+     *
+     * @var int
+     */
+    public $id;
 
-        $this->_em->persist($b);
-        $this->_em->persist($a);
+    /**
+     * @ORM\ManyToOne(targetEntity="GH7006PCT", inversedBy="fees")
+     * @ORM\JoinColumn(name="paymentCardTransactionId", referencedColumnName="id", nullable=false)
+     *
+     * @var GH7006PCT
+     */
+    public $pct;
 
-        $this->_em->flush();
-
-        self::assertIsInt($a->id);
-        self::assertIsInt($b->id);
+    public function __construct(GH7006PCT $pct)
+    {
+        $this->pct = $pct;
+        $pct->fees->add($this);
     }
 }
