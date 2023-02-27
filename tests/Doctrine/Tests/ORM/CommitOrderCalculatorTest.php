@@ -85,6 +85,20 @@ class CommitOrderCalculatorTest extends OrmTestCase
         self::assertSame(['C', 'D', 'A', 'B'], $this->computeResult());
     }
 
+    public function testGH7180Example(): void
+    {
+        // Example given in https://github.com/doctrine/orm/pull/7180#issuecomment-381341943
+
+        $this->addNodes('E', 'F', 'D', 'G');
+
+        $this->addDependency('D', 'G');
+        $this->addDependency('D', 'F', true);
+        $this->addDependency('F', 'E');
+        $this->addDependency('E', 'D');
+
+        self::assertSame(['F', 'E', 'D', 'G'], $this->computeResult());
+    }
+
     public function testCommitOrderingFromGH7259Test(): void
     {
         // this test corresponds to the GH7259Test::testPersistFileBeforeVersion functional test
