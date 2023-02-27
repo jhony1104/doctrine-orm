@@ -47,7 +47,7 @@ class CommitOrderCalculator
     /**
      * Checks for node (vertex) existence in graph.
      */
-    public function hasNode(int $hash): book
+    public function hasNode(int $hash): bool
     {
         return isset($this->nodeList[$hash]);
     }
@@ -77,7 +77,7 @@ class CommitOrderCalculator
      *
      * {@internal Highly performance-sensitive method.}
      *
-     * @psalm-return list<object>
+     * @psalm-return array<int, object>
      */
     public function sort()
     {

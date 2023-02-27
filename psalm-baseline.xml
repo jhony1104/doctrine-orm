@@ -3135,10 +3135,6 @@
       <code>unwrap</code>
       <code>unwrap</code>
     </PossiblyUndefinedMethod>
-    <RedundantCondition>
-      <code>$i &gt;= 0 &amp;&amp; $this-&gt;entityDeletions</code>
-      <code>$this-&gt;entityDeletions</code>
-    </RedundantCondition>
     <RedundantConditionGivenDocblockType>
       <code>is_array($entity)</code>
     </RedundantConditionGivenDocblockType>

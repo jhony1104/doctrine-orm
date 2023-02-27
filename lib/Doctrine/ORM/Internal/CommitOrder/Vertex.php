@@ -25,7 +25,7 @@ final class Vertex
      */
     public $value;
 
-    /** @var array<string, Edge> */
+    /** @var array<int, Edge> */
     public $dependencyList = [];
 
     /** @param object $value */
