@@ -8,6 +8,9 @@ use Doctrine\ORM\Internal\CommitOrderCalculator;
 use Doctrine\Tests\OrmTestCase;
 use stdClass;
 
+use function array_values;
+use function spl_object_id;
+
 /**
  * Tests of the commit order calculation.
  *
@@ -54,8 +57,8 @@ class CommitOrderCalculatorTest extends OrmTestCase
 
     public function testCommitOrdering2(): void
     {
-        $class1 = new stdCLass;
-        $class2 = new stdCLass;
+        $class1 = new stdCLass();
+        $class2 = new stdCLass();
 
         $this->_calc->addNode(spl_object_id($class1), $class1);
         $this->_calc->addNode(spl_object_id($class2), $class2);
@@ -74,10 +77,10 @@ class CommitOrderCalculatorTest extends OrmTestCase
     public function testCommitOrdering3(): void
     {
         // this test corresponds to the GH7259Test::testPersistFileBeforeVersion functional test
-        $class1 = new stdClass;
-        $class2 = new stdClass;
-        $class3 = new stdClass;
-        $class4 = new stdClass;
+        $class1 = new stdClass();
+        $class2 = new stdClass();
+        $class3 = new stdClass();
+        $class4 = new stdClass();
 
         $this->_calc->addNode(spl_object_id($class1), $class1);
         $this->_calc->addNode(spl_object_id($class2), $class2);
@@ -106,8 +109,8 @@ class CommitOrderCalculatorTest extends OrmTestCase
 
     public function testNodesMaintainOrderWhenNoDepencency(): void
     {
-        $class1 = new stdCLass;
-        $class2 = new stdCLass;
+        $class1 = new stdCLass();
+        $class2 = new stdCLass();
 
         $this->_calc->addNode(spl_object_id($class1), $class1);
         $this->_calc->addNode(spl_object_id($class2), $class2);
@@ -120,5 +123,4 @@ class CommitOrderCalculatorTest extends OrmTestCase
 
         self::assertSame($correctOrder, array_values($sorted));
     }
-
 }

@@ -23,6 +23,7 @@ use Doctrine\ORM\PersistentCollection;
 use Doctrine\ORM\Persisters\Entity\EntityPersister;
 use Doctrine\ORM\UnitOfWork;
 
+use function array_merge;
 use function assert;
 use function serialize;
 use function sha1;

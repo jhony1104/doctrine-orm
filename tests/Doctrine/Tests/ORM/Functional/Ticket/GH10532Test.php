@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Doctrine\Tests\ORM\Functional\Ticket;
 
 use Doctrine\ORM\Mapping as ORM;
@@ -33,12 +35,12 @@ class GH10532Test extends OrmFunctionalTestCase
         // Dependencies are $a1 -> $b -> $a2 -> $c
 
         $a1 = new GH10532A();
-        $b = new GH10532B();
+        $b  = new GH10532B();
         $a2 = new GH10532A();
-        $c = new GH10532C();
+        $c  = new GH10532C();
 
         $a1->x = $b;
-        $b->a = $a2;
+        $b->a  = $a2;
         $a2->x = $c;
 
         /*
@@ -109,7 +111,7 @@ class GH10532Test extends OrmFunctionalTestCase
         $this->_em->remove($a2);
         $this->_em->remove($b);
         $this->_em->remove($c);
-        
+
         $this->_em->flush();
     }
 }

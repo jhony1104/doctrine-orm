@@ -1260,18 +1260,28 @@ class UnitOfWork implements PropertyChangedListener
         }
     }
 
+    /**
+     * @return array<int, object>
+     */
     private function computeInsertExecutionOrder(): array
     {
         return $this->computeAssociationTopoSort($this->entityInsertions);
     }
 
+    /**
+     * @return array<int, object>
+     */
     private function computeDeleteExecutionOrder(): array
     {
         // TODO: Avoid double array_reverse
         return array_reverse($this->computeAssociationTopoSort($this->entityDeletions), true);
     }
 
-    /** @param array<int, object> $objects */
+    /**
+     * @param array<int, object> $objects
+     *
+     * @return array<int, object>
+     */
     private function computeAssociationTopoSort(array $objects): array
     {
         $calc = $this->createCommitOrderCalculator();
@@ -1290,11 +1300,11 @@ class UnitOfWork implements PropertyChangedListener
 
                 $targetEntity = $class->getFieldValue($entity, $assoc['fieldName']);
 
-                if (null === $targetEntity) {
+                if ($targetEntity === null) {
                     continue;
                 }
 
-                $targetOid    = spl_object_id($targetEntity);
+                $targetOid = spl_object_id($targetEntity);
 
                 $joinColumns = reset($assoc['joinColumns']);
                 $isNullable  = ! empty($joinColumns['nullable']);
