@@ -1302,7 +1302,12 @@ class UnitOfWork implements PropertyChangedListener
                 $targetOid = spl_object_id($targetEntity);
 
                 $joinColumns = reset($assoc['joinColumns']);
-                $isNullable  = ! empty($joinColumns['nullable']);
+
+                // According to https://www.doctrine-project.org/projects/doctrine-orm/en/2.14/reference/annotations-reference.html#annref_joincolumn,
+                // the default for "nullable" is true. We should, however, assume that this default is applied at another level and 'nullable'
+                // is defined here. In case it is not, assume `false` which is a more conservative default from the dependency computation
+                // point of view.
+                $isNullable = ! empty($joinColumns['nullable']);
 
                 if (isset($objects[$targetOid])) {
                     $calc->addDependency($targetOid, $oid, $isNullable);
