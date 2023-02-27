@@ -1,13 +1,25 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Doctrine\Tests\Functional\Ticket;
 
+use Doctrine\ORM\Mapping\Column;
+use Doctrine\ORM\Mapping\Entity;
+use Doctrine\ORM\Mapping\GeneratedValue;
+use Doctrine\ORM\Mapping\Id;
+use Doctrine\ORM\Mapping\JoinColumn;
+use Doctrine\ORM\Mapping\ManyToOne;
+use Doctrine\ORM\Mapping\OneToOne;
 use Doctrine\Tests\OrmFunctionalTestCase;
 
 /**
+ * Tests suggested in https://github.com/doctrine/orm/pull/7180#issuecomment-380841413 and
+ * https://github.com/doctrine/orm/pull/7180#issuecomment-381067448.
+ *
  * @group 7180
  */
-final class DDC7180Test extends OrmFunctionalTestCase
+final class GH7180Test extends OrmFunctionalTestCase
 {
     protected function setUp(): void
     {
@@ -32,9 +44,9 @@ final class DDC7180Test extends OrmFunctionalTestCase
 
         $this->_em->flush();
 
-        self::assertInternalType('integer', $a->id);
-        self::assertInternalType('integer', $b->id);
-        self::assertInternalType('integer', $c->id);
+        self::assertIsInt($a->id);
+        self::assertIsInt($b->id);
+        self::assertIsInt($c->id);
     }
 
     public function testIssue3NodeCycle(): void
@@ -56,10 +68,10 @@ final class DDC7180Test extends OrmFunctionalTestCase
 
         $this->_em->flush();
 
-        self::assertInternalType('integer', $d->id);
-        self::assertInternalType('integer', $e->id);
-        self::assertInternalType('integer', $f->id);
-        self::assertInternalType('integer', $g->id);
+        self::assertIsInt($d->id);
+        self::assertIsInt($e->id);
+        self::assertIsInt($f->id);
+        self::assertIsInt($g->id);
     }
 }
 
@@ -87,7 +99,8 @@ class DDC7180B
 {
     /**
      * @GeneratedValue()
-     * @Id @Column(type="integer")
+     * @Id
+     * @Column(type="integer")
      */
     public $id;
     /**
