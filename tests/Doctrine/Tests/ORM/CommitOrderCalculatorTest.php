@@ -123,4 +123,23 @@ class CommitOrderCalculatorTest extends OrmTestCase
 
         self::assertSame($correctOrder, array_values($sorted));
     }
+
+    public function testBreakCycleAtOptionalEdge(): void
+    {
+        $a = new stdCLass();
+        $b = new stdCLass();
+        $c = new stdCLass();
+
+        $this->_calc->addNode(spl_object_id($a), $a);
+        $this->_calc->addNode(spl_object_id($b), $b);
+        $this->_calc->addNode(spl_object_id($c), $c);
+
+        $this->_calc->addDependency(spl_object_id($a), spl_object_id($b), false);
+        $this->_calc->addDependency(spl_object_id($c), spl_object_id($b), false);
+        $this->_calc->addDependency(spl_object_id($b), spl_object_id($c), true);
+
+        $sorted = $this->_calc->sort();
+
+        self::assertSame([$a, $c, $b], array_values($sorted));
+    }
 }
