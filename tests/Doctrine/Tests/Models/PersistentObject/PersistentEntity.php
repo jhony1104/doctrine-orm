@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Doctrine\Tests\Models\PersistentObject;
 
 use Doctrine\Common\Persistence\PersistentObject;
+use Doctrine\ORM\Mapping as ORM;
 use Doctrine\ORM\Mapping\Column;
 use Doctrine\ORM\Mapping\Entity;
 use Doctrine\ORM\Mapping\GeneratedValue;
@@ -29,6 +30,8 @@ class PersistentEntity extends PersistentObject
     protected $name;
 
     /**
+     * @ORM\JoinColumn(nullable=true)
+     *
      * @ManyToOne(targetEntity="PersistentEntity")
      * @var PersistentEntity
      */
