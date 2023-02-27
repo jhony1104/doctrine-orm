@@ -81,7 +81,7 @@ class CommitOrderCalculator
      */
     public function sort()
     {
-        foreach ($this->nodeList as $vertex) {
+        foreach (array_reverse($this->nodeList) as $vertex) {
             if ($vertex->state !== VertexState::NOT_VISITED) {
                 continue;
             }

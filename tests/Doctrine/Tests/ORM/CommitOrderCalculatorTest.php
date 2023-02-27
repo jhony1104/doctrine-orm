@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Doctrine\Tests\ORM;
 
 use Doctrine\ORM\Internal\CommitOrderCalculator;
-use Doctrine\ORM\Mapping\ClassMetadata;
 use Doctrine\Tests\OrmTestCase;
+use stdClass;
 
 /**
  * Tests of the commit order calculation.
@@ -22,73 +22,72 @@ class CommitOrderCalculatorTest extends OrmTestCase
 
     protected function setUp(): void
     {
-        $this->markTestSkipped('WIP');
         $this->_calc = new CommitOrderCalculator();
     }
 
     public function testCommitOrdering1(): void
     {
-        $class1 = new ClassMetadata(NodeClass1::class);
-        $class2 = new ClassMetadata(NodeClass2::class);
-        $class3 = new ClassMetadata(NodeClass3::class);
-        $class4 = new ClassMetadata(NodeClass4::class);
-        $class5 = new ClassMetadata(NodeClass5::class);
+        $class1 = new stdClass();
+        $class2 = new stdClass();
+        $class3 = new stdClass();
+        $class4 = new stdClass();
+        $class5 = new stdClass();
 
-        $this->_calc->addNode($class1->name, $class1);
-        $this->_calc->addNode($class2->name, $class2);
-        $this->_calc->addNode($class3->name, $class3);
-        $this->_calc->addNode($class4->name, $class4);
-        $this->_calc->addNode($class5->name, $class5);
+        $this->_calc->addNode(spl_object_id($class1), $class1);
+        $this->_calc->addNode(spl_object_id($class2), $class2);
+        $this->_calc->addNode(spl_object_id($class3), $class3);
+        $this->_calc->addNode(spl_object_id($class4), $class4);
+        $this->_calc->addNode(spl_object_id($class5), $class5);
 
-        $this->_calc->addDependency($class1->name, $class2->name, 1);
-        $this->_calc->addDependency($class2->name, $class3->name, 1);
-        $this->_calc->addDependency($class3->name, $class4->name, 1);
-        $this->_calc->addDependency($class5->name, $class1->name, 1);
+        $this->_calc->addDependency(spl_object_id($class1), spl_object_id($class2), true);
+        $this->_calc->addDependency(spl_object_id($class2), spl_object_id($class3), true);
+        $this->_calc->addDependency(spl_object_id($class3), spl_object_id($class4), true);
+        $this->_calc->addDependency(spl_object_id($class5), spl_object_id($class1), true);
 
         $sorted = $this->_calc->sort();
 
         // There is only 1 valid ordering for this constellation
         $correctOrder = [$class5, $class1, $class2, $class3, $class4];
 
-        self::assertSame($correctOrder, $sorted);
+        self::assertSame($correctOrder, array_values($sorted));
     }
 
     public function testCommitOrdering2(): void
     {
-        $class1 = new ClassMetadata(NodeClass1::class);
-        $class2 = new ClassMetadata(NodeClass2::class);
+        $class1 = new stdCLass;
+        $class2 = new stdCLass;
 
-        $this->_calc->addNode($class1->name, $class1);
-        $this->_calc->addNode($class2->name, $class2);
+        $this->_calc->addNode(spl_object_id($class1), $class1);
+        $this->_calc->addNode(spl_object_id($class2), $class2);
 
-        $this->_calc->addDependency($class1->name, $class2->name, 0);
-        $this->_calc->addDependency($class2->name, $class1->name, 1);
+        $this->_calc->addDependency(spl_object_id($class1), spl_object_id($class2), false);
+        $this->_calc->addDependency(spl_object_id($class2), spl_object_id($class1), true);
 
         $sorted = $this->_calc->sort();
 
         // There is only 1 valid ordering for this constellation
         $correctOrder = [$class2, $class1];
 
-        self::assertSame($correctOrder, $sorted);
+        self::assertSame($correctOrder, array_values($sorted));
     }
 
     public function testCommitOrdering3(): void
     {
         // this test corresponds to the GH7259Test::testPersistFileBeforeVersion functional test
-        $class1 = new ClassMetadata(NodeClass1::class);
-        $class2 = new ClassMetadata(NodeClass2::class);
-        $class3 = new ClassMetadata(NodeClass3::class);
-        $class4 = new ClassMetadata(NodeClass4::class);
+        $class1 = new stdClass;
+        $class2 = new stdClass;
+        $class3 = new stdClass;
+        $class4 = new stdClass;
 
-        $this->_calc->addNode($class1->name, $class1);
-        $this->_calc->addNode($class2->name, $class2);
-        $this->_calc->addNode($class3->name, $class3);
-        $this->_calc->addNode($class4->name, $class4);
+        $this->_calc->addNode(spl_object_id($class1), $class1);
+        $this->_calc->addNode(spl_object_id($class2), $class2);
+        $this->_calc->addNode(spl_object_id($class3), $class3);
+        $this->_calc->addNode(spl_object_id($class4), $class4);
 
-        $this->_calc->addDependency($class4->name, $class1->name, 1);
-        $this->_calc->addDependency($class1->name, $class2->name, 1);
-        $this->_calc->addDependency($class4->name, $class3->name, 1);
-        $this->_calc->addDependency($class1->name, $class4->name, 0);
+        $this->_calc->addDependency(spl_object_id($class4), spl_object_id($class1), true);
+        $this->_calc->addDependency(spl_object_id($class1), spl_object_id($class2), true);
+        $this->_calc->addDependency(spl_object_id($class4), spl_object_id($class3), true);
+        $this->_calc->addDependency(spl_object_id($class1), spl_object_id($class4), false);
 
         $sorted = $this->_calc->sort();
 
@@ -102,22 +101,24 @@ class CommitOrderCalculatorTest extends OrmTestCase
         ];
 
         // We want to perform a strict comparison of the array
-        self::assertContains($sorted, $correctOrders, '', false, true);
+        self::assertContains(array_values($sorted), $correctOrders, '', false, true);
     }
-}
 
-class NodeClass1
-{
-}
-class NodeClass2
-{
-}
-class NodeClass3
-{
-}
-class NodeClass4
-{
-}
-class NodeClass5
-{
+    public function testNodesMaintainOrderWhenNoDepencency(): void
+    {
+        $class1 = new stdCLass;
+        $class2 = new stdCLass;
+
+        $this->_calc->addNode(spl_object_id($class1), $class1);
+        $this->_calc->addNode(spl_object_id($class2), $class2);
+
+        $sorted = $this->_calc->sort();
+
+        // Nodes that are not constrained by dependencies shall maintain the order
+        // in which they were added
+        $correctOrder = [$class1, $class2];
+
+        self::assertSame($correctOrder, array_values($sorted));
+    }
+
 }
