@@ -1,9 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Doctrine\Tests\ORM\Functional\Ticket;
 
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
+use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Tests\OrmFunctionalTestCase;
 
 /**
@@ -70,22 +73,24 @@ class DDC6499OneToManyRelationshipTest extends OrmFunctionalTestCase
 }
 
 /**
- * @Entity()
- * @Table("ddc6499_application")
+ * @ORM\Entity
+ * @ORM\Table("ddc6499_application")
  */
 class Application
 {
     /**
-     * @Id
-     * @GeneratedValue
-     * @Column(type="integer")
+     * @ORM\Id
+     * @ORM\GeneratedValue
+     * @ORM\Column(type="integer")
+     *
      * @var int
      */
     public $id;
 
     /**
-     * @OneToMany(targetEntity=ApplicationPerson::class, mappedBy="application", orphanRemoval=true, cascade={"persist"})
-     * @JoinColumn(nullable=false)
+     * @ORM\OneToMany(targetEntity=ApplicationPerson::class, mappedBy="application", orphanRemoval=true, cascade={"persist"})
+     * @ORM\JoinColumn(nullable=false)
+     *
      * @var Collection
      */
     private $applicationPeople;
@@ -101,22 +106,24 @@ class Application
     }
 }
 /**
- * @Entity()
- * @Table("ddc6499_person")
+ * @ORM\Entity()
+ * @ORM\Table("ddc6499_person")
  */
 class Person
 {
     /**
-     * @Id
-     * @GeneratedValue
-     * @Column(type="integer")
+     * @ORM\Id
+     * @ORM\GeneratedValue
+     * @ORM\Column(type="integer")
+     *
      * @var int
      */
     public $id;
 
     /**
-     * @OneToMany(targetEntity=ApplicationPerson::class, mappedBy="person", orphanRemoval=true, cascade={"persist"})
-     * @JoinColumn(nullable=false)
+     * @ORM\OneToMany(targetEntity=ApplicationPerson::class, mappedBy="person", orphanRemoval=true, cascade={"persist"})
+     * @ORM\JoinColumn(nullable=false)
+     *
      * @var Collection
      */
     private $applicationPeople;
@@ -133,29 +140,32 @@ class Person
 }
 
 /**
- * @Entity()
- * @Table("ddc6499_application_person")
+ * @ORM\Entity()
+ * @ORM\Table("ddc6499_application_person")
  */
 class ApplicationPerson
 {
     /**
-     * @Id
-     * @GeneratedValue
-     * @Column(type="integer")
+     * @ORM\Id
+     * @ORM\GeneratedValue
+     * @ORM\Column(type="integer")
+     *
      * @var int
      */
     public $id;
 
     /**
-     * @ManyToOne(targetEntity=Application::class, inversedBy="applicationPeople", cascade={"persist"})
-     * @JoinColumn(nullable=false)
+     * @ORM\ManyToOne(targetEntity=Application::class, inversedBy="applicationPeople", cascade={"persist"})
+     * @ORM\JoinColumn(nullable=false)
+     *
      * @var Application
      */
     public $application;
 
     /**
-     * @ManyToOne(targetEntity=Person::class, inversedBy="applicationPeople", cascade={"persist"})
-     * @JoinColumn(nullable=false)
+     * @ORM\ManyToOne(targetEntity=Person::class, inversedBy="applicationPeople", cascade={"persist"})
+     * @ORM\JoinColumn(nullable=false)
+     *
      * @var Person
      */
     public $person;

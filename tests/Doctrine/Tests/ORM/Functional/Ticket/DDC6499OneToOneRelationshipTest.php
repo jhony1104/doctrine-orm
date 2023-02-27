@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Doctrine\Tests\ORM\Functional\Ticket;
 
+use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Tests\OrmFunctionalTestCase;
 
 /**
@@ -52,20 +55,22 @@ class DDC6499OneToOneRelationshipTest extends OrmFunctionalTestCase
     }
 }
 
-/** @Entity */
+/** @ORM\Entity */
 class DDC6499A
 {
     /**
-     * @Id
-     * @Column(type="integer")
-     * @GeneratedValue
+     * @ORM\Id
+     * @ORM\Column(type="integer")
+     * @ORM\GeneratedValue
+     *
      * @var int
      */
     public $id;
 
     /**
-     * @OneToOne(targetEntity="DDC6499B", cascade={"persist"})
-     * @JoinColumn(nullable=false)
+     * @ORM\OneToOne(targetEntity="DDC6499B", cascade={"persist"})
+     * @ORM\JoinColumn(nullable=false)
+     *
      * @var DDC6499B
      */
     public $b;
@@ -76,13 +81,14 @@ class DDC6499A
     }
 }
 
-/** @Entity */
+/** @ORM\Entity */
 class DDC6499B
 {
     /**
-     * @Id
-     * @Column(type="integer")
-     * @GeneratedValue
+     * @ORM\Id
+     * @ORM\Column(type="integer")
+     * @ORM\GeneratedValue
+     *
      * @var int
      */
     public $id;
