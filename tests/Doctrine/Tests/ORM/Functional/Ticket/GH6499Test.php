@@ -111,7 +111,7 @@ class GH6499B
     /**
      * @ORM\ManyToOne(targetEntity=GH6499A::class)
      *
-     * @var DDC6944A
+     * @var GH6944A
      */
     private $a;
 }

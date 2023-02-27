@@ -10,7 +10,7 @@ use Doctrine\Tests\OrmFunctionalTestCase;
 /**
  * @group DDC-6499
  */
-class GH6499OneToOneRelationshipTest extends OrmFunctionalTestCase
+class GH6499OTOOneToOneRelationshipTest extends OrmFunctionalTestCase
 {
     protected function setUp(): void
     {
@@ -18,8 +18,8 @@ class GH6499OneToOneRelationshipTest extends OrmFunctionalTestCase
 
         $this->_schemaTool->createSchema(
             [
-                $this->_em->getClassMetadata(GH6499A::class),
-                $this->_em->getClassMetadata(GH6499B::class),
+                $this->_em->getClassMetadata(GH6499OTOA::class),
+                $this->_em->getClassMetadata(GH6499OTOB::class),
             ]
         );
     }
@@ -30,8 +30,8 @@ class GH6499OneToOneRelationshipTest extends OrmFunctionalTestCase
 
         $this->_schemaTool->dropSchema(
             [
-                $this->_em->getClassMetadata(GH6499A::class),
-                $this->_em->getClassMetadata(GH6499B::class),
+                $this->_em->getClassMetadata(GH6499OTOA::class),
+                $this->_em->getClassMetadata(GH6499OTOB::class),
             ]
         );
     }
@@ -45,18 +45,18 @@ class GH6499OneToOneRelationshipTest extends OrmFunctionalTestCase
             self::markTestSkipped('Platform does not support foreign keys.');
         }
 
-        $a = new GH6499A();
+        $a = new GH6499OTOA();
 
         $this->_em->persist($a);
         $this->_em->flush();
         $this->_em->clear();
 
-        self::assertEquals($this->_em->find(GH6499A::class, $a->id)->b->id, $a->b->id, 'Issue #6499 will result in a Integrity constraint violation before reaching this point.');
+        self::assertEquals($this->_em->find(GH6499OTOA::class, $a->id)->b->id, $a->b->id, 'Issue #6499 will result in a Integrity constraint violation before reaching this point.');
     }
 }
 
 /** @ORM\Entity */
-class GH6499A
+class GH6499OTOA
 {
     /**
      * @ORM\Id
@@ -68,21 +68,21 @@ class GH6499A
     public $id;
 
     /**
-     * @ORM\OneToOne(targetEntity="GH6499B", cascade={"persist"})
+     * @ORM\OneToOne(targetEntity="GH6499OTOB", cascade={"persist"})
      * @ORM\JoinColumn(nullable=false)
      *
-     * @var GH6499B
+     * @var GH6499OTOB
      */
     public $b;
 
     public function __construct()
     {
-        $this->b = new GH6499B();
+        $this->b = new GH6499OTOB();
     }
 }
 
 /** @ORM\Entity */
-class GH6499B
+class GH6499OTOB
 {
     /**
      * @ORM\Id

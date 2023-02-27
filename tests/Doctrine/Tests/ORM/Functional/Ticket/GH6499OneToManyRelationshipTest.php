@@ -12,7 +12,7 @@ use Doctrine\Tests\OrmFunctionalTestCase;
 /**
  * @group DDC-6499
  */
-class GH6499OneToManyRelationshipTest extends OrmFunctionalTestCase
+class GH6499OTMOneToManyRelationshipTest extends OrmFunctionalTestCase
 {
     protected function setUp(): void
     {
@@ -74,7 +74,7 @@ class GH6499OneToManyRelationshipTest extends OrmFunctionalTestCase
 
 /**
  * @ORM\Entity
- * @ORM\Table("GH6499_application")
+ * @ORM\Table("GH6499OTM_application")
  */
 class Application
 {
@@ -107,7 +107,7 @@ class Application
 }
 /**
  * @ORM\Entity()
- * @ORM\Table("GH6499_person")
+ * @ORM\Table("GH6499OTM_person")
  */
 class Person
 {
@@ -141,7 +141,7 @@ class Person
 
 /**
  * @ORM\Entity()
- * @ORM\Table("GH6499_application_person")
+ * @ORM\Table("GH6499OTM_application_person")
  */
 class ApplicationPerson
 {
