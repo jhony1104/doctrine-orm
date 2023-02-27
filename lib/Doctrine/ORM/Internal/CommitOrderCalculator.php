@@ -7,7 +7,6 @@ namespace Doctrine\ORM\Internal;
 use Doctrine\ORM\Internal\CommitOrder\Edge;
 use Doctrine\ORM\Internal\CommitOrder\Vertex;
 use Doctrine\ORM\Internal\CommitOrder\VertexState;
-use Doctrine\ORM\Mapping\ClassMetadata;
 
 use function array_reverse;
 
@@ -34,25 +33,21 @@ class CommitOrderCalculator
      *
      * Keys are provided hashes and values are the node definition objects.
      *
-     * @var array<string, Vertex>
+     * @var array<int, Vertex>
      */
     private $nodeList = [];
 
     /**
      * Volatile variable holding calculated nodes during sorting process.
      *
-     * @psalm-var list<ClassMetadata>
+     * @psalm-var array<int, object>
      */
     private $sortedNodeList = [];
 
     /**
      * Checks for node (vertex) existence in graph.
-     *
-     * @param string $hash
-     *
-     * @return bool
      */
-    public function hasNode($hash)
+    public function hasNode(int $hash): book
     {
         return isset($this->nodeList[$hash]);
     }
@@ -60,29 +55,20 @@ class CommitOrderCalculator
     /**
      * Adds a new node (vertex) to the graph, assigning its hash and value.
      *
-     * @param string        $hash
-     * @param ClassMetadata $node
-     *
-     * @return void
+     * @param object $node
      */
-    public function addNode($hash, $node)
+    public function addNode(int $hash, $node): void
     {
         $this->nodeList[$hash] = new Vertex($hash, $node);
     }
 
     /**
      * Adds a new dependency (edge) to the graph using their hashes.
-     *
-     * @param string $fromHash
-     * @param string $toHash
-     * @param int    $weight
-     *
-     * @return void
      */
-    public function addDependency($fromHash, $toHash, $weight)
+    public function addDependency(int $fromHash, int $toHash, bool $optional): void
     {
         $this->nodeList[$fromHash]->dependencyList[$toHash]
-            = new Edge($fromHash, $toHash, $weight);
+            = new Edge($fromHash, $toHash, $optional);
     }
 
     /**
@@ -91,7 +77,7 @@ class CommitOrderCalculator
      *
      * {@internal Highly performance-sensitive method.}
      *
-     * @psalm-return list<ClassMetadata>
+     * @psalm-return list<object>
      */
     public function sort()
     {
@@ -108,7 +94,7 @@ class CommitOrderCalculator
         $this->nodeList       = [];
         $this->sortedNodeList = [];
 
-        return array_reverse($sortedList);
+        return array_reverse($sortedList, true);
     }
 
     /**
@@ -131,7 +117,7 @@ class CommitOrderCalculator
                 case VertexState::IN_PROGRESS:
                     if (
                         isset($adjacentVertex->dependencyList[$vertex->hash]) &&
-                        $adjacentVertex->dependencyList[$vertex->hash]->weight < $edge->weight
+                        $adjacentVertex->dependencyList[$vertex->hash]->optional < $edge->optional
                     ) {
                         // If we have some non-visited dependencies in the in-progress dependency, we
                         // need to visit them before adding the node.
@@ -145,7 +131,7 @@ class CommitOrderCalculator
 
                         $adjacentVertex->state = VertexState::VISITED;
 
-                        $this->sortedNodeList[] = $adjacentVertex->value;
+                        $this->sortedNodeList[$adjacentVertex->hash] = $adjacentVertex->value;
                     }
 
                     break;
@@ -158,7 +144,7 @@ class CommitOrderCalculator
         if ($vertex->state !== VertexState::VISITED) {
             $vertex->state = VertexState::VISITED;
 
-            $this->sortedNodeList[] = $vertex->value;
+            $this->sortedNodeList[$vertex->hash] = $vertex->value;
         }
     }
 }
