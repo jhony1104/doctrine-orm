@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Doctrine\Tests\ORM\Functional\Ticket;
 
+use Doctrine\DBAL\Platforms\SqlitePlatform;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Tests\OrmFunctionalTestCase;
 
@@ -20,7 +21,20 @@ class GH6499Test extends OrmFunctionalTestCase
     {
         parent::setUp();
 
-        $this->createSchemaForModels(GH6499A::class, GH6499B::class);
+        $this->_schemaTool->createSchema([
+            $this->_em->getClassMetadata(GH6499A::class),
+            $this->_em->getClassMetadata(GH6499B::class),
+        ]);
+    }
+
+    protected function tearDown(): void
+    {
+        parent::tearDown();
+
+        $this->_schemaTool->dropSchema([
+            $this->_em->getClassMetadata(GH6499A::class),
+            $this->_em->getClassMetadata(GH6499B::class),
+        ]);
     }
 
     public function testIssue(): void
@@ -55,49 +69,4 @@ class GH6499Test extends OrmFunctionalTestCase
         self::assertIsInt($a->id);
         self::assertIsInt($b->id);
     }
-}
-
-/**
- * @ORM\Entity
- */
-class GH6499A
-{
-    /**
-     * @ORM\Id
-     * @ORM\Column(type="integer")
-     * @ORM\GeneratedValue
-     *
-     * @var int
-     */
-    public $id;
-
-    /**
-     * @ORM\JoinColumn(nullable=false)
-     * @ORM\OneToOne(targetEntity=GH6499B::class)
-     *
-     * @var GH6499B
-     */
-    public $b;
-}
-
-/**
- * @ORM\Entity
- */
-class GH6499B
-{
-    /**
-     * @ORM\Id
-     * @ORM\Column(type="integer")
-     * @ORM\GeneratedValue
-     *
-     * @var int
-     */
-    public $id;
-
-    /**
-     * @ORM\ManyToOne(targetEntity=GH6499A::class)
-     *
-     * @var GH6499A
-     */
-    private $a;
 }

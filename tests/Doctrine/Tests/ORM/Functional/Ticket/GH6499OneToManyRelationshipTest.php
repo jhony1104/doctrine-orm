@@ -10,9 +10,9 @@ use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Tests\OrmFunctionalTestCase;
 
 /**
- * @group DDC-6499
+ * @group GH6499
  */
-class GH6499OTMOneToManyRelationshipTest extends OrmFunctionalTestCase
+class GH6499OneToManyRelationshipTest extends OrmFunctionalTestCase
 {
     protected function setUp(): void
     {
@@ -45,10 +45,6 @@ class GH6499OTMOneToManyRelationshipTest extends OrmFunctionalTestCase
      */
     public function testIssue(): void
     {
-        if (! $this->_em->getConnection()->getDatabasePlatform()->supportsForeignKeyConstraints()) {
-            self::markTestSkipped('Platform does not support foreign keys.');
-        }
-
         $person = new Person();
         $this->_em->persist($person);
 
