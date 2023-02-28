@@ -7,7 +7,6 @@ namespace Doctrine\Tests\ORM;
 use Doctrine\ORM\Internal\CommitOrder\CycleDetectedException;
 use Doctrine\ORM\Internal\CommitOrderCalculator;
 use Doctrine\Tests\OrmTestCase;
-
 use function array_map;
 use function array_values;
 use function spl_object_id;
@@ -121,6 +120,36 @@ class CommitOrderCalculatorTest extends OrmTestCase
         self::assertContains($this->computeResult(), $correctOrders);
     }
 
+    public function testCommitOrderingFromGH8349Case1Test()
+    {
+        $this->addNodes('A', 'B', 'C', 'D');
+
+        $this->addDependency('D', 'A');
+        $this->addDependency('A', 'B', true);
+        $this->addDependency('B', 'D', true);
+        $this->addDependency('B', 'C', true);
+        $this->addDependency('C', 'D', true);
+
+        // Many orderings are possible here, but the bottom line is D must be before A (it's the only hard requirement).
+        $result = $this->computeResult();
+
+        $indexA = array_search('A', $result, true);
+        $indexD = array_search('D', $result, true);
+        self::assertTrue($indexD < $indexA);
+    }
+
+    public function testCommitOrderingFromGH8349Case2Test()
+    {
+        $this->addNodes('A', 'B');
+
+        $this->addDependency('B', 'A');
+        $this->addDependency('B', 'A', true); // interesting: We have two edges in that direction
+        $this->addDependency('A', 'B', true);
+
+        // The B -> A requirement determines the result here
+        self::assertSame(['B', 'A'], $this->computeResult());
+    }
+
     public function testNodesMaintainOrderWhenNoDepencency(): void
     {
         $this->addNodes('A', 'B', 'C');
@@ -157,7 +186,7 @@ class CommitOrderCalculatorTest extends OrmTestCase
     private function addNodes(string ...$names): void
     {
         foreach ($names as $name) {
-            $node               = new Node($name);
+            $node = new Node($name);
             $this->nodes[$name] = $node;
             $this->_calc->addNode($node->id, $node);
         }
@@ -174,7 +203,7 @@ class CommitOrderCalculatorTest extends OrmTestCase
     private function computeResult(): array
     {
         return array_map(static function (Node $n): string {
-                return $n->name;
+            return $n->name;
         }, array_values($this->_calc->sort()));
     }
 }
@@ -190,6 +219,6 @@ class Node
     public function __construct(string $name)
     {
         $this->name = $name;
-        $this->id   = spl_object_id($this);
+        $this->id = spl_object_id($this);
     }
 }
