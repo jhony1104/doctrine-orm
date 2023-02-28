@@ -14,22 +14,7 @@ class GH7006Test extends OrmFunctionalTestCase
     {
         parent::setUp();
 
-        $this->_schemaTool->createSchema([
-            $this->_em->getClassMetadata(GH7006Book::class),
-            $this->_em->getClassMetadata(GH7006PCT::class),
-            $this->_em->getClassMetadata(GH7006PCTFee::class),
-        ]);
-    }
-
-    protected function tearDown(): void
-    {
-        parent::tearDown();
-
-        $this->_schemaTool->dropSchema([
-            $this->_em->getClassMetadata(GH7006Book::class),
-            $this->_em->getClassMetadata(GH7006PCT::class),
-            $this->_em->getClassMetadata(GH7006PCTFee::class),
-        ]);
+        $this->createSchemaForModels(GH7006Book::class, GH7006PCT::class, GH7006PCTFee::class);
     }
 
     public function testIssue(): void

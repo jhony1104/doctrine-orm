@@ -16,24 +16,7 @@ class GH6499OneToOneRelationshipTest extends OrmFunctionalTestCase
     {
         parent::setUp();
 
-        $this->_schemaTool->createSchema(
-            [
-                $this->_em->getClassMetadata(GH6499OTOA::class),
-                $this->_em->getClassMetadata(GH6499OTOB::class),
-            ]
-        );
-    }
-
-    protected function tearDown(): void
-    {
-        parent::tearDown();
-
-        $this->_schemaTool->dropSchema(
-            [
-                $this->_em->getClassMetadata(GH6499OTOA::class),
-                $this->_em->getClassMetadata(GH6499OTOB::class),
-            ]
-        );
+        $this->createSchemaForModels(GH6499OTOA::class, GH6499OTOB::class);
     }
 
     /**

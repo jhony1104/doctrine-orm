@@ -18,26 +18,7 @@ class GH6499OneToManyRelationshipTest extends OrmFunctionalTestCase
     {
         parent::setUp();
 
-        $this->_schemaTool->createSchema(
-            [
-                $this->_em->getClassMetadata(Application::class),
-                $this->_em->getClassMetadata(Person::class),
-                $this->_em->getClassMetadata(ApplicationPerson::class),
-            ]
-        );
-    }
-
-    protected function tearDown(): void
-    {
-        parent::tearDown();
-
-        $this->_schemaTool->dropSchema(
-            [
-                $this->_em->getClassMetadata(Application::class),
-                $this->_em->getClassMetadata(Person::class),
-                $this->_em->getClassMetadata(ApplicationPerson::class),
-            ]
-        );
+        $this->createSchemaForModels(Application::class, Person::class, ApplicationPerson::class);
     }
 
     /**
