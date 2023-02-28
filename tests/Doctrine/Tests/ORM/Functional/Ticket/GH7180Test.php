@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Doctrine\Tests\Functional\Ticket;
+namespace Doctrine\Tests\ORM\Functional\Ticket;
 
 use Doctrine\ORM\Mapping\Column;
 use Doctrine\ORM\Mapping\Entity;
@@ -25,14 +25,14 @@ final class GH7180Test extends OrmFunctionalTestCase
     {
         parent::setUp();
 
-        $this->setUpEntitySchema([DDC7180A::class, DDC7180B::class, DDC7180C::class, DDC7180D::class, DDC7180E::class, DDC7180F::class, DDC7180G::class]);
+        $this->setUpEntitySchema([GH7180A::class, GH7180B::class, GH7180C::class, GH7180D::class, GH7180E::class, GH7180F::class, GH7180G::class]);
     }
 
     public function testIssue(): void
     {
-        $a = new DDC7180A();
-        $b = new DDC7180B();
-        $c = new DDC7180C();
+        $a = new GH7180A();
+        $b = new GH7180B();
+        $c = new GH7180C();
 
         $a->b = $b;
         $b->a = $a;
@@ -51,10 +51,10 @@ final class GH7180Test extends OrmFunctionalTestCase
 
     public function testIssue3NodeCycle(): void
     {
-        $d = new DDC7180D();
-        $e = new DDC7180E();
-        $f = new DDC7180F();
-        $g = new DDC7180G();
+        $d = new GH7180D();
+        $e = new GH7180E();
+        $f = new GH7180F();
+        $g = new GH7180G();
 
         $d->e = $e;
         $e->f = $f;
@@ -78,16 +78,19 @@ final class GH7180Test extends OrmFunctionalTestCase
 /**
  * @Entity
  */
-class DDC7180A
+class GH7180A
 {
     /**
      * @GeneratedValue()
      * @Id @Column(type="integer")
+     * @var int
      */
     public $id;
+
     /**
-     * @OneToOne(targetEntity=DDC7180B::class, inversedBy="a")
+     * @OneToOne(targetEntity=GH7180B::class, inversedBy="a")
      * @JoinColumn(nullable=false)
+     * @var GH7180B
      */
     public $b;
 }
@@ -95,17 +98,20 @@ class DDC7180A
 /**
  * @Entity
  */
-class DDC7180B
+class GH7180B
 {
     /**
      * @GeneratedValue()
      * @Id
      * @Column(type="integer")
+     * @var int
      */
     public $id;
+
     /**
-     * @OneToOne(targetEntity=DDC7180A::class, mappedBy="b")
+     * @OneToOne(targetEntity=GH7180A::class, mappedBy="b")
      * @JoinColumn(nullable=true)
+     * @var GH7180A
      */
     public $a;
 }
@@ -113,16 +119,19 @@ class DDC7180B
 /**
  * @Entity
  */
-class DDC7180C
+class GH7180C
 {
     /**
      * @GeneratedValue()
      * @Id @Column(type="integer")
+     * @var int
      */
     public $id;
+
     /**
-     * @ManyToOne(targetEntity=DDC7180A::class)
+     * @ManyToOne(targetEntity=GH7180A::class)
      * @JoinColumn(nullable=false)
+     * @var GH7180A
      */
     public $a;
 }
@@ -130,16 +139,19 @@ class DDC7180C
 /**
  * @Entity
  */
-class DDC7180D
+class GH7180D
 {
     /**
      * @GeneratedValue()
      * @Id @Column(type="integer")
+     * @var int
      */
     public $id;
+
     /**
-     * @OneToOne(targetEntity=DDC7180E::class)
+     * @OneToOne(targetEntity=GH7180E::class)
      * @JoinColumn(nullable=false)
+     * @var GH7180E
      */
     public $e;
 }
@@ -147,16 +159,19 @@ class DDC7180D
 /**
  * @Entity
  */
-class DDC7180E
+class GH7180E
 {
     /**
      * @GeneratedValue()
      * @Id @Column(type="integer")
+     * @var int
      */
     public $id;
+
     /**
-     * @OneToOne(targetEntity=DDC7180F::class)
+     * @OneToOne(targetEntity=GH7180F::class)
      * @JoinColumn(nullable=false)
+     * @var GH7180F
      */
     public $f;
 }
@@ -164,16 +179,19 @@ class DDC7180E
 /**
  * @Entity
  */
-class DDC7180F
+class GH7180F
 {
     /**
      * @GeneratedValue()
      * @Id @Column(type="integer")
+     * @var int
      */
     public $id;
+
     /**
-     * @ManyToOne(targetEntity=DDC7180D::class)
+     * @ManyToOne(targetEntity=GH7180D::class)
      * @JoinColumn(nullable=true)
+     * @var GH7180D
      */
     public $d;
 }
@@ -181,16 +199,19 @@ class DDC7180F
 /**
  * @Entity
  */
-class DDC7180G
+class GH7180G
 {
     /**
      * @GeneratedValue()
      * @Id @Column(type="integer")
+     * @var int
      */
     public $id;
+
     /**
-     * @ManyToOne(targetEntity=DDC7180D::class)
+     * @ManyToOne(targetEntity=GH7180D::class)
      * @JoinColumn(nullable=false)
+     * @var GH7180D
      */
     public $d;
 }
