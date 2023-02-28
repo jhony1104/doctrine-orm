@@ -1304,10 +1304,15 @@ class UnitOfWork implements PropertyChangedListener
                 $joinColumns = reset($assoc['joinColumns']);
 
                 // According to https://www.doctrine-project.org/projects/doctrine-orm/en/2.14/reference/annotations-reference.html#annref_joincolumn,
-                // the default for "nullable" is true. We should, however, assume that this default is applied at another level and 'nullable'
-                // is defined here. In case it is not, assume `false` which is a more conservative default from the dependency computation
-                // point of view.
-                $isNullable = ! empty($joinColumns['nullable']);
+                // the default for "nullable" is true. Unfortunately, it seems this default is not applied at the metadata driver, factory or other
+                // level, but in fact we may have an undefined 'nullable' key here, so we must assume that default here as well.
+                //
+                // From the dependency computation point of view, `false` would be a safer default, but that won't work with all examples and
+                // reproduce cases given.
+                //
+                // Same in \Doctrine\ORM\Tools\EntityGenerator::isAssociationIsNullable or \Doctrine\ORM\Persisters\Entity\BasicEntityPersister::getJoinSQLForJoinColumns,
+                // to give two examples.
+                $isNullable = !isset($joinColumns['nullable']) || $joinColumns['nullable'];
 
                 if (isset($objects[$targetOid])) {
                     $calc->addDependency($targetOid, $oid, $isNullable);
